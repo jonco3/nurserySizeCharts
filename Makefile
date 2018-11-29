@@ -36,8 +36,6 @@ data/%/post.dat: results/post_log.txt bin/extractResults
 	mkdir -p $(@D)
 	bin/extractResults $* $< > $@
 
-PLOT_OPTIONS = -x "Time" -y "Nursery size" -l linespoints -r [][0:16]
-
 output/%.svg: data/%.dat
 	mkdir -p $(@D)
 	gnuplot -e "\
