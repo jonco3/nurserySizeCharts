@@ -45,8 +45,10 @@ output/%.svg: data/%.dat
 		set xlabel 'Collection'; \
 		set ylabel 'Nursery size'; \
 		set y2label 'Promotion rate / %'; \
+		set border 11 back; \
+		set xtics nomirror; \
+		set ytics nomirror; \
 		set y2tics; \
-		unset logscale y2; \
 		plot [][0:16][][0:20] '$^' using 1 with linespoints title 'Nursery size', \
 			'' using 2 with linespoints axes x1y2 title 'Promotion rate'; " > $@
 
