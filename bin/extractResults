@@ -3,6 +3,7 @@
 # Extract the results for a single test run from the combined input file.
 
 import fileinput
+import re
 import sys
 
 if len(sys.argv) < 2:
@@ -23,6 +24,8 @@ for line in fileinput.input():
         elements = line.split()
         if elements[3] == "Size":
             continue
+        assert re.match(r'\d+$', elements[3])
+        assert re.match(r'[\d\.]+%$', elements[2])
         data.append(elements)
         continue
 
@@ -30,7 +33,7 @@ for line in fileinput.input():
         name = line.split(":")[0]
         if name == benchmark:
             for elements in data:
-                print(elements[3])
+                print("%s %s" % (elements[3], elements[2][:-1]))
             found = True
             break
         data = []

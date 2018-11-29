@@ -9,16 +9,16 @@ BENCHMARKS = Richards DeltaBlue Crypto RayTrace EarleyBoyer RegExp Splay PdfJS \
 #   Gameboy
 #   zlib
 
-GRAPH_FILES = $(foreach set, pre post both, \
+GRAPH_FILES = $(foreach set, pre post, \
                 $(foreach benchmark, $(BENCHMARKS), \
-                  output/$(set)/$(benchmark).svg))
+                  output/$(benchmark)/$(set).svg))
 
 HTML_FILES = $(foreach benchmark, $(BENCHMARKS), \
                output/$(benchmark).html)
 
-INTERMEDIATES = $(foreach benchmark, $(BENCHMARKS), \
-				  data/$(benchmark)/pre.dat \
-				  data/$(benchmark)/post.dat)
+INTERMEDIATES = $(foreach set, pre post, \
+                  $(foreach benchmark, $(BENCHMARKS), \
+                    data/$(benchmark)/$(set).dat))
 
 all: $(GRAPH_FILES) $(HTML_FILES)
 
@@ -38,17 +38,17 @@ data/%/post.dat: results/post_log.txt bin/extractResults
 
 PLOT_OPTIONS = -x "Time" -y "Nursery size" -l linespoints -r [][0:16]
 
-output/pre/%.svg: data/%/pre.dat
+output/%.svg: data/%.dat
 	mkdir -p $(@D)
-	eplot -d -m $^ -t "Pre" $(PLOT_OPTIONS) -s $(shell bin/calcSize $^) -g -o $@
-
-output/post/%.svg: data/%/post.dat
-	mkdir -p $(@D)
-	eplot -d -m $^ -t "Post" $(PLOT_OPTIONS) -s $(shell bin/calcSize $^) -g -o $@
-
-output/both/%.svg: data/%/pre.dat data/%/post.dat
-	mkdir -p $(@D)
-	eplot -d -m $^ -t "Pre@Post" $(PLOT_OPTIONS) -s $(shell bin/calcSize $^) -g -o $@
+	gnuplot -e "\
+		set terminal svg size $(shell bin/calcSize $^); \
+		set xlabel 'Collection'; \
+		set ylabel 'Nursery size'; \
+		set y2label 'Promotion rate / %'; \
+		set y2tics; \
+		unset logscale y2; \
+		plot [][0:16][][0:20] '$^' using 1 with linespoints title 'Nursery size', \
+			'' using 2 with linespoints axes x1y2 title 'Promotion rate'; " > $@
 
 output/%.html: template/benchmark.html
 	mkdir -p $(@D)
