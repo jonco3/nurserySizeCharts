@@ -33,14 +33,12 @@ clean:
 
 .PRECIOUS: $(INTERMEDIATES)
 
-split_files: $(SPLIT_TRIGGER_FILES)
-
 data/%.split: results/%/octane.txt bin/splitResults
 	mkdir -p data/$*
 	bin/splitResults data/$* $<
 	touch $@
 
-$(SPLIT_DATA_FILES): split_files
+$(SPLIT_DATA_FILES): $(SPLIT_TRIGGER_FILES)
 
 output/%.svg: data/%.dat 
 	mkdir -p $(@D)
