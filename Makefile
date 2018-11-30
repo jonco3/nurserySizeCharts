@@ -1,26 +1,29 @@
 RESULT_SETS = pre post
 
-BENCHMARKS = Richards DeltaBlue Crypto RayTrace EarleyBoyer RegExp Splay PdfJS \
-			 CodeLoad Box2D Typescript
-
-# The following to too few nursery GCs to be useful:
+# The following octane benchmarks do too few nursery GCs to be useful:
 #   Mandreel
 #   NavierStokes
 #   Gameboy
 #   zlib
+OCTANE_BENCHMARKS = Richards DeltaBlue Crypto RayTrace EarleyBoyer RegExp \
+				    Splay PdfJS CodeLoad Box2D Typescript
+
+BENCHMARKS = $(OCTANE_BENCHMARKS)
 
 GRAPH_FILES = $(foreach set, $(RESULT_SETS), \
                 $(foreach benchmark, $(BENCHMARKS), \
-                  output/$(benchmark)/$(set).svg))
+                  output/$(set)/$(benchmark).svg))
 
 HTML_FILES = $(foreach benchmark, $(BENCHMARKS), \
                output/$(benchmark).html)
 
 SPLIT_DATA_FILES = $(foreach set, $(RESULT_SETS), \
 					 $(foreach benchmark, $(BENCHMARKS), \
-                       data/$(benchmark)/$(set).dat))
+                       data/$(set)/$(benchmark).dat))
 
-INTERMEDIATES = $(SPLIT_DATA_FILES)
+SPLIT_TRIGGER_FILES = $(foreach set, $(RESULT_SETS), data/$(set).split)
+
+INTERMEDIATES = $(SPLIT_DATA_FILES) $(SPLIT_TRIGGER_FILES)
 
 all: $(GRAPH_FILES) $(HTML_FILES)
 
@@ -30,15 +33,16 @@ clean:
 
 .PRECIOUS: $(INTERMEDIATES)
 
-data/%/pre.dat: results/pre/octane.txt bin/extractResults
-	mkdir -p $(@D)
-	bin/extractResults $* $< > $@
+split_files: $(SPLIT_TRIGGER_FILES)
 
-data/%/post.dat: results/post/octane.txt bin/extractResults
-	mkdir -p $(@D)
-	bin/extractResults $* $< > $@
+data/%.split: results/%/octane.txt bin/splitResults
+	mkdir -p data/$*
+	bin/splitResults data/$* $<
+	touch $@
 
-output/%.svg: data/%.dat
+$(SPLIT_DATA_FILES): split_files
+
+output/%.svg: data/%.dat 
 	mkdir -p $(@D)
 	gnuplot -e "\
 		set terminal svg size $(shell bin/calcSize $^); \

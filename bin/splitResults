@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
-# Extract the results for a single test run from the combined input file.
+# Split the octane results into individual files
 
 import fileinput
+import os.path
 import re
 import sys
 
 if len(sys.argv) < 2:
-   sys.exit("usage: extractResults BENCHMARK [INPUT_FILES...]")
+   sys.exit("usage: extractResults OUTPUT_DIR [INPUT_FILES...]")
 
-benchmark = sys.argv.pop(1)
+output_dir = sys.argv.pop(1)
 
 data = []
-found = False
 
 for line in fileinput.input():
     line = line.rstrip()
@@ -25,21 +25,17 @@ for line in fileinput.input():
         if elements[3] == "Size":
             continue
         assert re.match(r'\d+$', elements[3])
-        assert re.match(r'[\d\.]+%$', elements[2])
+        assert re.match(r'\d+\.\d*%$', elements[2])
         data.append(elements)
         continue
 
     if ": " in line:
         name = line.split(":")[0]
-        if name == benchmark:
+        path = os.path.join(output_dir, name + ".dat")
+        with open(path, "w") as f:
             for elements in data:
-                print("%s %s" % (elements[3], elements[2][:-1]))
-            found = True
-            break
+                f.write("%s %s\n" % (elements[3], elements[2][:-1]))
         data = []
         continue
 
     sys.exit("Can't parse line: " + line)
-
-if not found:
-    sys.exit("Requested data set not found")
