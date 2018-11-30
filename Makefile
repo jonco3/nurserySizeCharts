@@ -1,4 +1,4 @@
-RESULTS_FILES = results/pre.txt results/post.txt
+RESULT_SETS = pre post
 
 BENCHMARKS = Richards DeltaBlue Crypto RayTrace EarleyBoyer RegExp Splay PdfJS \
 			 CodeLoad Box2D Typescript
@@ -9,16 +9,18 @@ BENCHMARKS = Richards DeltaBlue Crypto RayTrace EarleyBoyer RegExp Splay PdfJS \
 #   Gameboy
 #   zlib
 
-GRAPH_FILES = $(foreach set, pre post, \
+GRAPH_FILES = $(foreach set, $(RESULT_SETS), \
                 $(foreach benchmark, $(BENCHMARKS), \
                   output/$(benchmark)/$(set).svg))
 
 HTML_FILES = $(foreach benchmark, $(BENCHMARKS), \
                output/$(benchmark).html)
 
-INTERMEDIATES = $(foreach set, pre post, \
-                  $(foreach benchmark, $(BENCHMARKS), \
-                    data/$(benchmark)/$(set).dat))
+SPLIT_DATA_FILES = $(foreach set, $(RESULT_SETS), \
+					 $(foreach benchmark, $(BENCHMARKS), \
+                       data/$(benchmark)/$(set).dat))
+
+INTERMEDIATES = $(SPLIT_DATA_FILES)
 
 all: $(GRAPH_FILES) $(HTML_FILES)
 
@@ -28,11 +30,11 @@ clean:
 
 .PRECIOUS: $(INTERMEDIATES)
 
-data/%/pre.dat: results/pre_log.txt bin/extractResults
+data/%/pre.dat: results/pre.txt bin/extractResults
 	mkdir -p $(@D)
 	bin/extractResults $* $< > $@
 
-data/%/post.dat: results/post_log.txt bin/extractResults
+data/%/post.dat: results/post.txt bin/extractResults
 	mkdir -p $(@D)
 	bin/extractResults $* $< > $@
 
