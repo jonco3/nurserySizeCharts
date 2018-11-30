@@ -8,7 +8,7 @@ RESULT_SETS = pre post
 OCTANE_BENCHMARKS = Richards DeltaBlue Crypto RayTrace EarleyBoyer RegExp \
 				    Splay PdfJS CodeLoad Box2D Typescript
 
-BENCHMARKS = $(OCTANE_BENCHMARKS)
+BENCHMARKS = $(OCTANE_BENCHMARKS) ares6
 
 GRAPH_FILES = $(foreach set, $(RESULT_SETS), \
                 $(foreach benchmark, $(BENCHMARKS), \
@@ -18,12 +18,16 @@ HTML_FILES = $(foreach benchmark, $(BENCHMARKS), \
                output/$(benchmark).html)
 
 SPLIT_DATA_FILES = $(foreach set, $(RESULT_SETS), \
-					 $(foreach benchmark, $(BENCHMARKS), \
+					 $(foreach benchmark, $(OCTANE_BENCHMARKS), \
                        data/$(set)/$(benchmark).dat))
 
 SPLIT_TRIGGER_FILES = $(foreach set, $(RESULT_SETS), data/$(set).split)
 
-INTERMEDIATES = $(SPLIT_DATA_FILES) $(SPLIT_TRIGGER_FILES)
+ALL_DATA_FILES = $(foreach set, $(RESULT_SETS), \
+				   $(foreach benchmark, $(BENCHMARKS), \
+                     data/$(set)/$(benchmark).dat))
+
+INTERMEDIATES = $(ALL_DATA_FILES) $(SPLIT_TRIGGER_FILES)
 
 all: $(GRAPH_FILES) $(HTML_FILES)
 
@@ -39,6 +43,10 @@ data/%.split: results/%/octane.txt bin/splitResults
 	touch $@
 
 $(SPLIT_DATA_FILES): $(SPLIT_TRIGGER_FILES)
+
+data/%/ares6.dat: results/%/ares6.txt bin/extractAres6
+	mkdir -p $(@D)
+	bin/extractAres6 $< > $@
 
 output/%.svg: data/%.dat 
 	mkdir -p $(@D)
