@@ -30,11 +30,11 @@ clean:
 
 .PRECIOUS: $(INTERMEDIATES)
 
-data/%/pre.dat: results/pre.txt bin/extractResults
+data/%/pre.dat: results/pre/octane.txt bin/extractResults
 	mkdir -p $(@D)
 	bin/extractResults $* $< > $@
 
-data/%/post.dat: results/post.txt bin/extractResults
+data/%/post.dat: results/post/octane.txt bin/extractResults
 	mkdir -p $(@D)
 	bin/extractResults $* $< > $@
 
