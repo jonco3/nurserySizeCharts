@@ -14,7 +14,8 @@ GRAPH_FILES = $(foreach set, $(RESULT_SETS), \
                 $(foreach benchmark, $(BENCHMARKS), \
                   output/$(set)/$(benchmark).svg))
 
-HTML_FILES = $(foreach benchmark, $(BENCHMARKS), \
+HTML_FILES = output/index.html \
+			 $(foreach benchmark, $(BENCHMARKS), \
                output/$(benchmark).html)
 
 SPLIT_DATA_FILES = $(foreach set, $(RESULT_SETS), \
@@ -62,6 +63,16 @@ output/%.svg: data/%.dat
 		plot [][0:16][][0:20] '$^' using 1 with linespoints title 'Nursery size', \
 			'' using 2 with linespoints axes x1y2 title 'Promotion rate'; " > $@
 
-output/%.html: template/benchmark.html
+output/%.html:
 	mkdir -p $(@D)
-	bin/substitute $< $(*F) > $@
+	echo '<title>Results for $(*F)</title>' > $@
+	echo '<h1>Results for $(*F)</h1>' >> $@
+	echo '<p><img src="./pre/$(*F).svg"></p>' >> $@
+	echo '<p><img src="./post/$(*F).svg"></p>' >> $@
+
+output/index.html:
+	mkdir -p $(@D)
+	echo '<title>Benchmarks</title>' > $@
+	echo '<h1>Benchmarks</h1>' >> $@
+	echo '<ul>$(foreach benchmark, $(BENCHMARKS), \
+                <li><a href="./$(benchmark).html">$(benchmark)</a></li>)</ul>' >> $@
