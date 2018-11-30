@@ -31,11 +31,12 @@ for line in fileinput.input():
 
     if ": " in line:
         name = line.split(":")[0]
-        path = os.path.join(output_dir, name + ".dat")
-        with open(path, "w") as f:
-            for elements in data:
-                f.write("%s %s\n" % (elements[3], elements[2][:-1]))
-        data = []
+        if " " not in name:
+            path = os.path.join(output_dir, name + ".dat")
+            with open(path, "w") as f:
+                for elements in data:
+                    f.write("%s %s\n" % (elements[3], elements[2][:-1]))
+            data = []
         continue
 
     sys.exit("Can't parse line: " + line)
