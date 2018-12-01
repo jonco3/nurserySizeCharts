@@ -3,7 +3,7 @@ RESULT_SETS = $(shell ls builds)
 TALOS_BENCHMARKS = ares6 speedometer
 
 TALOS_RESULT_FILES = $(foreach set, $(RESULT_SETS), \
-                       $(foreach benchmark, $(BENCHMARKS), \
+                       $(foreach benchmark, $(TALOS_BENCHMARKS), \
                          results/talos/$(set)/$(benchmark).txt))
 
 all: $(TALOS_RESULT_FILES)
