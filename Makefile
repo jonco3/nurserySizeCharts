@@ -12,10 +12,6 @@ OCTANE_BENCHMARKS = Richards DeltaBlue Crypto RayTrace EarleyBoyer RegExp \
 #   tp6_*
 TALOS_BENCHMARKS = ares6 speedometer
 
-BENCHMARKS = $(OCTANE_BENCHMARKS) $(TALOS_BENCHMARKS)
-
-OCTANE_RESULT_FILES = $(foreach set, $(RESULT_SETS), results/$(set)/octane.txt)
-
 GRAPH_FILES = $(foreach set, $(RESULT_SETS), \
                 $(foreach benchmark, $(OCTANE_BENCHMARKS), \
                   output/octane/$(set)/$(benchmark).svg) \
@@ -28,32 +24,24 @@ HTML_FILES = output/index.html \
 			 $(foreach benchmark, $(TALOS_BENCHMARKS), \
                output/talos/$(benchmark).html)
 
-SPLIT_DATA_FILES = $(foreach set, $(RESULT_SETS), \
-					 $(foreach benchmark, $(OCTANE_BENCHMARKS), \
-                       data/octane/$(set)/$(benchmark).dat))
+DATA_FILES = $(foreach set, $(RESULT_SETS), \
+			   $(foreach benchmark, $(OCTANE_BENCHMARKS), \
+                 data/octane/$(set)/$(benchmark).dat)) \
+             $(foreach set, $(RESULT_SETS), \
+			   $(foreach benchmark, $(TALOS_BENCHMARKS), \
+                 data/talos/$(set)/$(benchmark).dat))
 
-SPLIT_TRIGGER_FILES = $(foreach set, $(RESULT_SETS), data/octane/$(set).split)
-
-TALOS_DATA_FILES = $(foreach set, $(RESULT_SETS), \
-			         $(foreach benchmark, $(TALOS_BENCHMARKS), \
-                       data/talos/$(set)/$(benchmark).dat))
-
-ALL_DATA_FILES = $(SPLIT_DATA_FILES) $(TALOS_DATA_FILES)
-
-INTERMEDIATES = $(ALL_DATA_FILES) $(SPLIT_TRIGGER_FILES)
-
-all: $(INTERMEDIATES) $(GRAPH_FILES) $(HTML_FILES) 
+all: $(DATA_FILES) $(GRAPH_FILES) $(HTML_FILES)
 
 .PHONY: clean
 clean:
 	rm -rf data/* output/*
 
 # Split octane results into separate files for each sub benchmark.
-$(SPLIT_DATA_FILES): $(OCTANE_RESULT_FILES) $(SPLIT_TRIGGER_FILES)
-data/octane/%.split: results/%/octane.txt bin/splitResults
-	mkdir -p data/octane/$*
-	bin/splitResults data/octane/$* $<
-	touch $@
+.SECONDEXPANSION:
+data/octane/%.dat: results/$$(dir $$*)/octane.txt
+	mkdir -p $(@D)
+	bin/splitResults $(@D) $<
 
 # Extract data from talos log files with special case for ARES6.
 data/talos/%.dat: results/talos/%.txt bin/extractTalos
