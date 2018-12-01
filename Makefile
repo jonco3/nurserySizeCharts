@@ -39,7 +39,7 @@ clean:
 
 # Split octane results into separate files for each sub benchmark.
 .SECONDEXPANSION:
-data/octane/%.dat: results/$$(dir $$*)/octane.txt
+data/octane/%.dat: results/octane/$$(*D).txt
 	mkdir -p $(@D)
 	bin/splitResults $(@D) $<
 
