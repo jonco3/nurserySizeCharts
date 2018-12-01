@@ -1,0 +1,15 @@
+RESULT_SETS = $(shell ls builds)
+
+TALOS_BENCHMARKS = ares6 speedometer
+
+TALOS_RESULT_FILES = $(foreach set, $(RESULT_SETS), \
+                       $(foreach benchmark, $(BENCHMARKS), \
+                         results/talos/$(set)/$(benchmark).txt))
+
+all: $(TALOS_RESULT_FILES)
+
+# Run talos benchmarks.  No corresponding rule for octane so far.
+.SECONDEXPANSION:
+results/talos/%.txt: builds/$$(*D)
+	mkdir -p $(@D)
+	bin/runTalos $(*F) builds/$(*D) | tee $@

@@ -8,47 +8,62 @@ RESULT_SETS = pre post
 OCTANE_BENCHMARKS = Richards DeltaBlue Crypto RayTrace EarleyBoyer RegExp \
 				    Splay PdfJS CodeLoad Box2D Typescript
 
-BENCHMARKS = $(OCTANE_BENCHMARKS) ares6
+# The following talos benchmarks also do too few nursery GCs to be useful:
+#   tp6_*
+TALOS_BENCHMARKS = ares6 speedometer
+
+BENCHMARKS = $(OCTANE_BENCHMARKS) $(TALOS_BENCHMARKS)
+
+OCTANE_RESULT_FILES = $(foreach set, $(RESULT_SETS), results/$(set)/octane.txt)
 
 GRAPH_FILES = $(foreach set, $(RESULT_SETS), \
-                $(foreach benchmark, $(BENCHMARKS), \
-                  output/$(set)/$(benchmark).svg))
+                $(foreach benchmark, $(OCTANE_BENCHMARKS), \
+                  output/octane/$(set)/$(benchmark).svg) \
+                $(foreach benchmark, $(TALOS_BENCHMARKS), \
+                  output/talos/$(set)/$(benchmark).svg))
 
 HTML_FILES = output/index.html \
-			 $(foreach benchmark, $(BENCHMARKS), \
-               output/$(benchmark).html)
+             $(foreach benchmark, $(OCTANE_BENCHMARKS), \
+               output/octane/$(benchmark).html) \
+			 $(foreach benchmark, $(TALOS_BENCHMARKS), \
+               output/talos/$(benchmark).html)
 
 SPLIT_DATA_FILES = $(foreach set, $(RESULT_SETS), \
 					 $(foreach benchmark, $(OCTANE_BENCHMARKS), \
-                       data/$(set)/$(benchmark).dat))
+                       data/octane/$(set)/$(benchmark).dat))
 
-SPLIT_TRIGGER_FILES = $(foreach set, $(RESULT_SETS), data/$(set).split)
+SPLIT_TRIGGER_FILES = $(foreach set, $(RESULT_SETS), data/octane/$(set).split)
 
-ALL_DATA_FILES = $(foreach set, $(RESULT_SETS), \
-				   $(foreach benchmark, $(BENCHMARKS), \
-                     data/$(set)/$(benchmark).dat))
+TALOS_DATA_FILES = $(foreach set, $(RESULT_SETS), \
+			         $(foreach benchmark, $(TALOS_BENCHMARKS), \
+                       data/talos/$(set)/$(benchmark).dat))
+
+ALL_DATA_FILES = $(SPLIT_DATA_FILES) $(TALOS_DATA_FILES)
 
 INTERMEDIATES = $(ALL_DATA_FILES) $(SPLIT_TRIGGER_FILES)
 
-all: $(GRAPH_FILES) $(HTML_FILES)
+all: $(INTERMEDIATES) $(GRAPH_FILES) $(HTML_FILES) 
 
 .PHONY: clean
 clean:
 	rm -rf data/* output/*
 
-.PRECIOUS: $(INTERMEDIATES)
-
-data/%.split: results/%/octane.txt bin/splitResults
-	mkdir -p data/$*
-	bin/splitResults data/$* $<
+# Split octane results into separate files for each sub benchmark.
+$(SPLIT_DATA_FILES): $(OCTANE_RESULT_FILES) $(SPLIT_TRIGGER_FILES)
+data/octane/%.split: results/%/octane.txt bin/splitResults
+	mkdir -p data/octane/$*
+	bin/splitResults data/octane/$* $<
 	touch $@
 
-$(SPLIT_DATA_FILES): $(SPLIT_TRIGGER_FILES)
-
-data/%/ares6.dat: results/%/ares6.txt bin/extractAres6
+# Extract data from talos log files with special case for ARES6.
+data/talos/%.dat: results/talos/%.txt bin/extractTalos
+	mkdir -p $(@D)
+	bin/extractTalos $< > $@
+data/talos/%/ares6.dat: results/talos/%/ares6.txt bin/extractAres6
 	mkdir -p $(@D)
 	bin/extractAres6 $< > $@
 
+# Plot a graph for each benchmark.
 output/%.svg: data/%.dat 
 	mkdir -p $(@D)
 	gnuplot -e "\
@@ -63,16 +78,17 @@ output/%.svg: data/%.dat
 		plot [][0:16][][0:20] '$^' using 1 with linespoints title 'Nursery size', \
 			'' using 2 with linespoints axes x1y2 title 'Promotion rate'; " > $@
 
-output/%.html:
+# Generate HTML to compare graphs side by side.
+output/%.html: Makefile
 	mkdir -p $(@D)
 	echo '<title>Results for $(*F)</title>' > $@
 	echo '<h1>Results for $(*F)</h1>' >> $@
-	echo '<p><img src="./pre/$(*F).svg"></p>' >> $@
-	echo '<p><img src="./post/$(*F).svg"></p>' >> $@
-
-output/index.html:
+	echo '$(foreach set, $(RESULT_SETS), <p><img src="./$(set)/$(*F).svg"></p>)' >> $@
+output/index.html: Makefile
 	mkdir -p $(@D)
 	echo '<title>Benchmarks</title>' > $@
 	echo '<h1>Benchmarks</h1>' >> $@
-	echo '<ul>$(foreach benchmark, $(BENCHMARKS), \
-                <li><a href="./$(benchmark).html">$(benchmark)</a></li>)</ul>' >> $@
+	echo '<ul>$(foreach benchmark, $(OCTANE_BENCHMARKS), \
+                <li><a href="./octane/$(benchmark).html">$(benchmark)</a></li>)</ul>' >> $@
+	echo '<ul>$(foreach benchmark, $(TALOS_BENCHMARKS), \
+                <li><a href="./talos/$(benchmark).html">$(benchmark)</a></li>)</ul>' >> $@

@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+
+# Extract results from the talos log file
+
+import fileinput
+import re
+
+data = []
+for line in fileinput.input():
+    line = line.rstrip()
+
+    if "| MinorGC:" not in line:
+        continue
+
+    elements = line.split()[6:]
+    assert elements[0] == "MinorGC:"
+    if elements[3] == "Size":
+        continue
+
+    assert re.match(r'\d+$', elements[3])
+    assert re.match(r'\d+\.\d*%$', elements[2])
+
+    print("%s %s" % (elements[3], elements[2][:-1]))
