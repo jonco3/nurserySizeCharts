@@ -71,12 +71,14 @@ output/%.html: Makefile
 	mkdir -p $(@D)
 	echo '<title>Results for $(*F)</title>' > $@
 	echo '<h1>Results for $(*F)</h1>' >> $@
-	echo '$(foreach set, $(RESULT_SETS), <p><img src="./$(set)/$(*F).svg"></p>)' >> $@
+	echo '$(foreach set, $(RESULT_SETS), <h2>$(set)</h2><p><img src="./$(set)/$(*F).svg"></p>)' >> $@
 output/index.html: Makefile
 	mkdir -p $(@D)
-	echo '<title>Benchmarks</title>' > $@
-	echo '<h1>Benchmarks</h1>' >> $@
+	echo '<title>Benchmark results</title>' > $@
+	echo '<h1>Benchmark results</h1>' >> $@
+	echo '<h2>Octane</h2>' >> $@
 	echo '<ul>$(foreach benchmark, $(OCTANE_BENCHMARKS), \
                 <li><a href="./octane/$(benchmark).html">$(benchmark)</a></li>)</ul>' >> $@
+	echo '<h2>Talos</h2>' >> $@
 	echo '<ul>$(foreach benchmark, $(TALOS_BENCHMARKS), \
                 <li><a href="./talos/$(benchmark).html">$(benchmark)</a></li>)</ul>' >> $@
