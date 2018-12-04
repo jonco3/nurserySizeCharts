@@ -1,0 +1,4 @@
+nurserysizecharts
+=================
+
+Generate charts to help investigate the nursery size heuristic in SpiderMonkey.
